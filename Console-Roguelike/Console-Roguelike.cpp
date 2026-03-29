@@ -1,9 +1,16 @@
 #include <iostream>
 #include <fstream>
+#include <windows.h>
+#include <conio.h>
+
 
 using namespace std;
 
-char map[15][8];
+const int width = 20;
+const int height = 7;
+
+char map[15][7];
+char background = '~';
 
 struct Point {
 	int x; int y;
@@ -29,7 +36,7 @@ enum ItemType {
 struct Entity {
 	char symbol;
 	Point position;
-	string Type;
+    Type entityType;
 
 	//enemies
 	int hp_enemy;
@@ -49,7 +56,7 @@ Entity createGoblin(int x, int y) {
 	Entity goblin;
 	goblin.symbol = 'G';
 	goblin.position = { x,y };
-	goblin.Type = Type::Enemy;
+	goblin.entityType = Type::Enemy;
 	goblin.enemyType = EnemyType::Goblin;
 	goblin.hp_enemy = 5;
 	return goblin;
@@ -59,7 +66,7 @@ Entity createGigant(int x, int y) {
 	Entity gigant;
 	gigant.symbol = 'B';
 	gigant.position = { x,y };
-	gigant.Type = Type::Enemy;
+	gigant.entityType = Type::Enemy;
 	gigant.enemyType = EnemyType::Gigant;
 	gigant.hp_enemy = 20;
 	return gigant;
@@ -69,7 +76,7 @@ Entity createGuard(int x, int y) {
 	Entity guard;
 	guard.symbol = 'I';
 	guard.position = { x,y };
-	guard.Type = Type::Enemy;
+	guard.entityType = Type::Enemy;
 	guard.enemyType = EnemyType::Guard;
 	guard.hp_enemy = 10;
 	return guard;
@@ -78,8 +85,8 @@ Entity createGuard(int x, int y) {
 Entity createPlayer(int x, int y) {
 	Entity player;
 	player.symbol = 'P';
-	player.position = { 0,4 };
-	player.Type = Type::Player;
+	player.position = {x,y};
+	player.entityType = Type::Player;
 	player.hp_player = 20;
 	return player;
 }
@@ -88,7 +95,7 @@ Entity createHeal(int x, int y) {
 	Entity heal;
 	heal.symbol = 'H';
 	heal.position = { x,y };
-	heal.Type = Type::Item;
+	heal.entityType = Type::Item;
 	heal.itemType = ItemType::Heal;
 	return heal;
 }
@@ -97,28 +104,70 @@ Entity createDB(int x, int y) {
 	Entity damage_boost;
 	damage_boost.symbol = 'D';
 	damage_boost.position = { x,y };
-	damage_boost.Type = Type::Item;
+	damage_boost.entityType = Type::Item;
 	damage_boost.itemType = ItemType::DamageBoost;
 	return damage_boost;
 }
 
 
-void drawMap() {
-	for (int y = 0; y < 8; y++) {
-		for (int x = 0; x < 15; x++) {
-			map[x][y] = '~';
-			cout << map[x][y];
+void draw(Entity player) {
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			if (x == player.position.x && y == player.position.y)
+				cout << player.symbol;
+			else {
+				map[x][y] = background;
+				cout << map[x][y];
+
+			}
 		}
 		cout << endl;
 	}
 }
 
-void drawPlayer() {
-	
+void playerMove(Entity& player) {
+	if (_kbhit()) {
+		switch (_getch()) {
+		case 'a': player.position.x--; break;
+		case 'd': player.position.x++; break;
+		case 'w': player.position.y--; break;
+		case 's': player.position.y++; break;
+		}
+	if (player.position.x >= width) {
+		player.position.x--;
+	}
+	if (player.position.x < 0) {
+		player.position.x++;
+	}
+	if (player.position.y >= height) {
+		player.position.y = player.position.y--;
+	}
+	if (player.position.y < 0) {
+		player.position.y = player.position.y++;
+	}
+	}
+	Sleep(50);
+
 }
 
+/*void drawPlayer(Entity player) {
+	map[player.position.x][player.position.y] = player.symbol;
+	cout << map[player.position.x][player.position.y];
+}*/
+
 int main() {
-	drawMap();
+	Entity player = createPlayer(0, 3);
+	bool isRuning = true;
+
+	while (isRuning) {
+		system("cls");
+		draw(player);
+		playerMove(player);
+
+
+	}
+
+	
 
 	return 0;
 }
