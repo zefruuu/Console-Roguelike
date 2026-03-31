@@ -7,6 +7,8 @@
 
 using namespace std;
 
+bool isRuning = true;
+
 struct Point {
 	int x; int y;
 };
@@ -36,6 +38,7 @@ struct Entity {
 
 	//enemies
 	int hp_enemy;
+
 	EnemyType enemyType;
 
 	//items 
@@ -171,7 +174,7 @@ void draw(Entity player) {
 				toDraw = player.symbol;
 			}
 			else {
-				
+
 				for (int i = 0; i < goblins_count; i++) {
 					if (x == goblins[i].position.x && y == goblins[i].position.y) {
 						toDraw = goblins[i].symbol;
@@ -179,7 +182,7 @@ void draw(Entity player) {
 					}
 				}
 
-				
+
 				for (int i = 0; i < guards_count; i++) {
 					if (x == guards[i].position.x && y == guards[i].position.y) {
 						toDraw = guards[i].symbol;
@@ -187,7 +190,7 @@ void draw(Entity player) {
 					}
 				}
 
-				
+
 				for (int i = 0; i < gigants_count; i++) {
 					if (x == gigants[i].position.x && y == gigants[i].position.y) {
 						toDraw = gigants[i].symbol;
@@ -208,7 +211,7 @@ void playerMove(Entity& player) {
 		switch (_getch()) {
 		case 'a': player.position.x--; break;
 		case 'd': player.position.x++; break;
-		case 'w' && 'ö': player.position.y--; break;
+		case 'w': player.position.y--; break;
 		case 's': player.position.y++; break;
 		}
 	}
@@ -229,18 +232,73 @@ void playerMove(Entity& player) {
 
 }
 
+void fight(Entity& player) {
+	for (int i = 0; i < goblins_count; i++) {
+		if (player.position.x == goblins[i].position.x && player.position.y == goblins[i].position.y) {
+			goblins[i].hp_enemy -= player.damage;
+			player.hp_player -= goblins[i].hp_enemy;
+
+			if (player.hp_player > 0) {
+				for (int j = i; j < goblins_count - 1; j++) {
+					goblins[j] = goblins[j + 1];
+				}
+
+				goblins_count--;
+				i--;
+			}
+		}
+		for (int i = 0; i < guards_count; i++) {
+			if (player.position.x == guards[i].position.x && player.position.y == guards[i].position.y) {
+				guards[i].hp_enemy -= player.damage;
+				player.hp_player -= guards[i].hp_enemy;
+
+				if (player.hp_player > 0) {
+					for (int j = i; j < guards_count - 1; j++) {
+						guards[j] = guards[j + 1];
+					}
+
+					guards_count--;
+					i--;
+				}
+			}
+		}
+		for (int i = 0; i < gigants_count; i++) {
+			if (player.position.x == gigants[i].position.x && player.position.y == gigants[i].position.y) {
+				gigants[i].hp_enemy -= player.damage;
+				player.hp_player -= gigants[i].hp_enemy;
+
+				if (player.hp_player > 0) {
+					for (int j = i; j < gigants_count - 1; j++) {
+						gigants[j] = gigants[j + 1];
+					}
+
+					gigants_count--;
+					i--;
+				}
+			}
+
+
+		}
+	}
+	if (player.hp_player <= 0) {
+		isRuning = false;
+		cout << "You Dead!";
+		::Sleep(200);
+	}
+}
+
+
 int main() {
 	srand(time(NULL));
 	Entity player = createPlayer(0, 3);
 
-	
+
 	spawnGuard();
 
 	spawnGoblin();
 
 	spawnGigant();
-	
-	bool isRuning = true;
+
 
 	while (isRuning) {
 		system("cls");
@@ -248,13 +306,15 @@ int main() {
 		draw(player);
 
 		playerMove(player);
-		
-		
-		
-		
+
+		fight(player);
+
+
+
+
 	}
 
-	
+
 
 	return 0;
 }
