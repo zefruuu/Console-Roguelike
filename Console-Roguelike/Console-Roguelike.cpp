@@ -87,6 +87,7 @@ Entity createPlayer(int x, int y) {
 	player.position = { x,y };
 	player.entityType = Type::Player;
 	player.hp_player = 20;
+	player.damage = 5;
 	return player;
 }
 
@@ -96,6 +97,7 @@ Entity createHeal(int x, int y) {
 	heal.position = { x,y };
 	heal.entityType = Type::Item;
 	heal.itemType = ItemType::Heal;
+	heal.effect = 5;
 	return heal;
 }
 
@@ -105,6 +107,7 @@ Entity createDB(int x, int y) {
 	damage_boost.position = { x,y };
 	damage_boost.entityType = Type::Item;
 	damage_boost.itemType = ItemType::DamageBoost;
+	damage_boost.effect = 5;
 	return damage_boost;
 }
 
@@ -123,6 +126,14 @@ Entity guards[MAX_GUARDS];
 const int MAX_GIGANTS = 2;
 int gigants_count = 0;
 Entity gigants[MAX_GIGANTS];
+
+const int MAX_HEALS = 4;
+int heals_count = 0;
+Entity heals[MAX_HEALS];
+
+const int MAX_DAMAGE_BOOST = 4;
+int db_count = 0;
+Entity damage_boosts[MAX_DAMAGE_BOOST];
 
 
 
@@ -163,6 +174,26 @@ void spawnGigant() {
 
 }
 
+void spawnHeal() {
+	heals_count = 1 + rand() % 3;
+
+	for (int i = 0; i < heals_count; i++) {
+		heals[i] = createHeal(4 + rand() % (width - 4 + 1), rand() % height);
+
+	}
+
+}
+
+void spawnDamageBoost() {
+	db_count = 1 + rand() % 3;
+
+	for (int i = 0; i < db_count; i++) {
+		damage_boosts[i] = createDB(4 + rand() % (width - 4 + 1), rand() % height);
+
+	}
+
+}
+
 
 void draw(Entity player) {
 	for (int y = 0; y < height; y++) {
@@ -174,6 +205,20 @@ void draw(Entity player) {
 				toDraw = player.symbol;
 			}
 			else {
+				for (int i = 0; i < heals_count; i++) {
+					if (x == heals[i].position.x && y == heals[i].position.y) {
+						toDraw = heals[i].symbol;
+						break;
+					}
+				}
+
+				for (int i = 0; i < db_count; i++) {
+					if (x == damage_boosts[i].position.x && y == damage_boosts[i].position.y) {
+						toDraw = damage_boosts[i].symbol;
+						break;
+					}
+				}
+
 
 				for (int i = 0; i < goblins_count; i++) {
 					if (x == goblins[i].position.x && y == goblins[i].position.y) {
@@ -231,6 +276,32 @@ void playerMove(Entity& player) {
 	::Sleep(50);
 
 }
+void takeItem(Entity& player) {
+	for (int i = 0; i < heals_count; i++) {
+		if (player.position.x == heals[i].position.x && player.position.y == heals[i].position.y) {
+			player.hp_player += heals[i].effect;
+			for (int j = i; j < heals_count - 1; j++) {
+				heals[j] = heals[j + 1];
+			}
+
+				heals_count--;
+				i--;
+			
+		}
+	}
+	for (int i = 0; i < db_count; i++) {
+		if (player.position.x == damage_boosts[i].position.x && player.position.y == damage_boosts[i].position.y) {
+			player.damage += damage_boosts[i].effect;
+			for (int j = i; j < db_count - 1; j++) {
+				damage_boosts[j] = damage_boosts[j + 1];
+			}
+
+			db_count--;
+			i--;
+
+		}
+	}
+}
 
 void fight(Entity& player) {
 	for (int i = 0; i < goblins_count; i++) {
@@ -238,7 +309,7 @@ void fight(Entity& player) {
 			goblins[i].hp_enemy -= player.damage;
 			player.hp_player -= goblins[i].hp_enemy;
 
-			if (player.hp_player > 0) {
+			if (player.hp_player > 0 && goblins[i].hp_enemy <= 0) {
 				for (int j = i; j < goblins_count - 1; j++) {
 					goblins[j] = goblins[j + 1];
 				}
@@ -247,12 +318,13 @@ void fight(Entity& player) {
 				i--;
 			}
 		}
+	}
 		for (int i = 0; i < guards_count; i++) {
 			if (player.position.x == guards[i].position.x && player.position.y == guards[i].position.y) {
 				guards[i].hp_enemy -= player.damage;
 				player.hp_player -= guards[i].hp_enemy;
 
-				if (player.hp_player > 0) {
+				if (player.hp_player > 0 && guards[i].hp_enemy <= 0) {
 					for (int j = i; j < guards_count - 1; j++) {
 						guards[j] = guards[j + 1];
 					}
@@ -267,7 +339,7 @@ void fight(Entity& player) {
 				gigants[i].hp_enemy -= player.damage;
 				player.hp_player -= gigants[i].hp_enemy;
 
-				if (player.hp_player > 0) {
+				if (player.hp_player > 0 && gigants[i].hp_enemy <= 0) {
 					for (int j = i; j < gigants_count - 1; j++) {
 						gigants[j] = gigants[j + 1];
 					}
@@ -276,10 +348,8 @@ void fight(Entity& player) {
 					i--;
 				}
 			}
-
-
 		}
-	}
+
 	if (player.hp_player <= 0) {
 		isRuning = false;
 		cout << "You Dead!";
@@ -299,6 +369,10 @@ int main() {
 
 	spawnGigant();
 
+	spawnHeal();
+
+	spawnDamageBoost();
+
 
 	while (isRuning) {
 		system("cls");
@@ -308,6 +382,9 @@ int main() {
 		playerMove(player);
 
 		fight(player);
+
+		takeItem(player);
+
 
 
 
