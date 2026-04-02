@@ -38,7 +38,7 @@ struct Entity {
 
 	//enemies
 	int hp_enemy;
-
+	int damage_enemy;
 	EnemyType enemyType;
 
 	//items 
@@ -47,7 +47,7 @@ struct Entity {
 
 	//player
 	int hp_player = 0;
-	int damage = 0;
+	int damage_player = 0;
 
 };
 
@@ -57,6 +57,7 @@ Entity createGoblin(int x, int y) {
 	goblin.position = { x,y };
 	goblin.entityType = Type::Enemy;
 	goblin.enemyType = EnemyType::Goblin;
+	goblin.damage_enemy = 5;
 	goblin.hp_enemy = 5;
 	return goblin;
 }
@@ -67,6 +68,7 @@ Entity createGigant(int x, int y) {
 	gigant.position = { x,y };
 	gigant.entityType = Type::Enemy;
 	gigant.enemyType = EnemyType::Gigant;
+	gigant.damage_enemy = 20;
 	gigant.hp_enemy = 20;
 	return gigant;
 }
@@ -77,6 +79,7 @@ Entity createGuard(int x, int y) {
 	guard.position = { x,y };
 	guard.entityType = Type::Enemy;
 	guard.enemyType = EnemyType::Guard;
+	guard.damage_enemy = 10;
 	guard.hp_enemy = 10;
 	return guard;
 }
@@ -87,7 +90,7 @@ Entity createPlayer(int x, int y) {
 	player.position = { x,y };
 	player.entityType = Type::Player;
 	player.hp_player = 20;
-	player.damage = 5;
+	player.damage_player = 5;
 	return player;
 }
 
@@ -143,6 +146,7 @@ const int height = 7;
 char map[width][height];
 char background = '~';
 
+int kills;
 
 
 void spawnGoblin() {
@@ -192,6 +196,14 @@ void spawnDamageBoost() {
 
 	}
 
+}
+
+void drawStats(Entity& player) {
+	cout << "Your Statistics: " << endl;
+	cout << "Health: " << player.hp_player << endl;
+	cout << "Damage: " << player.damage_player << endl;
+	cout << "Kills: " << kills << endl;
+	cout << endl;
 }
 
 
@@ -291,7 +303,7 @@ void takeItem(Entity& player) {
 	}
 	for (int i = 0; i < db_count; i++) {
 		if (player.position.x == damage_boosts[i].position.x && player.position.y == damage_boosts[i].position.y) {
-			player.damage += damage_boosts[i].effect;
+			player.damage_player += damage_boosts[i].effect;
 			for (int j = i; j < db_count - 1; j++) {
 				damage_boosts[j] = damage_boosts[j + 1];
 			}
@@ -306,14 +318,15 @@ void takeItem(Entity& player) {
 void fight(Entity& player) {
 	for (int i = 0; i < goblins_count; i++) {
 		if (player.position.x == goblins[i].position.x && player.position.y == goblins[i].position.y) {
-			goblins[i].hp_enemy -= player.damage;
-			player.hp_player -= goblins[i].hp_enemy;
+			goblins[i].hp_enemy -= player.damage_player;
+			player.hp_player -= goblins[i].damage_enemy;
 
 			if (player.hp_player > 0 && goblins[i].hp_enemy <= 0) {
 				for (int j = i; j < goblins_count - 1; j++) {
 					goblins[j] = goblins[j + 1];
 				}
 
+				kills++;
 				goblins_count--;
 				i--;
 			}
@@ -321,14 +334,15 @@ void fight(Entity& player) {
 	}
 		for (int i = 0; i < guards_count; i++) {
 			if (player.position.x == guards[i].position.x && player.position.y == guards[i].position.y) {
-				guards[i].hp_enemy -= player.damage;
-				player.hp_player -= guards[i].hp_enemy;
+				guards[i].hp_enemy -= player.damage_player;
+				player.hp_player -= guards[i].damage_enemy;
 
 				if (player.hp_player > 0 && guards[i].hp_enemy <= 0) {
 					for (int j = i; j < guards_count - 1; j++) {
 						guards[j] = guards[j + 1];
 					}
 
+					kills++;
 					guards_count--;
 					i--;
 				}
@@ -336,14 +350,15 @@ void fight(Entity& player) {
 		}
 		for (int i = 0; i < gigants_count; i++) {
 			if (player.position.x == gigants[i].position.x && player.position.y == gigants[i].position.y) {
-				gigants[i].hp_enemy -= player.damage;
-				player.hp_player -= gigants[i].hp_enemy;
+				gigants[i].hp_enemy -= player.damage_player;
+				player.hp_player -= gigants[i].damage_enemy;
 
 				if (player.hp_player > 0 && gigants[i].hp_enemy <= 0) {
 					for (int j = i; j < gigants_count - 1; j++) {
 						gigants[j] = gigants[j + 1];
 					}
 
+					kills++;
 					gigants_count--;
 					i--;
 				}
@@ -376,6 +391,8 @@ int main() {
 
 	while (isRuning) {
 		system("cls");
+
+		drawStats(player);
 
 		draw(player);
 
