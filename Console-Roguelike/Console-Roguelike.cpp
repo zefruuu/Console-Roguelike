@@ -1,13 +1,14 @@
-#include <iostream>
+﻿#include <iostream>
 #include <fstream>
 #include <windows.h>
 #include <conio.h>
 #include <ctime>
-
+#include <locale>
 
 using namespace std;
 
 bool isRuning = true;
+
 
 struct Point {
 	int x; int y;
@@ -16,6 +17,7 @@ struct Point {
 
 enum Type {
 	Player,
+	Door,
 	Enemy,
 	Item
 };
@@ -27,7 +29,7 @@ enum EnemyType {
 enum ItemType {
 	Heal,
 	DamageBoost,
-	Coin
+	Coin,
 };
 
 
@@ -125,6 +127,14 @@ Entity createCoin(int x, int y) {
 	coin.effect = 1;
 	return coin;
 }
+Entity createDoor(int x, int y) {
+	Entity door;
+	door.symbol = '@';
+	door.position = { x,y };
+	door.entityType = Type::Door;
+	return door;
+}
+
 
 
 
@@ -163,8 +173,9 @@ char map[width][height];
 char border[width + 1][height + 1];
 char background = '~';
 char borderSymbol = '#';
-int kills;
+int kills = 0;
 int coin = 0;
+int level_count = 1;
 
 
 void spawnGoblin() {
@@ -232,10 +243,11 @@ void drawStats(Entity& player) {
 	std::cout << "Damage: " << player.damage_player << endl;
 	std::cout << "Kills: " << kills << endl << endl;
 	std::cout << "Coins: " << coin << endl;
+	std::cout << "Level:" << level_count << endl;
 	std::cout << endl;
 }
 
-void draw(Entity player) {
+void draw(Entity player, Entity door) {
 
 
 	for (int y = -1; y <= height; y++) {
@@ -252,6 +264,9 @@ void draw(Entity player) {
 
 				if (x == player.position.x && y == player.position.y) {
 					toDraw = player.symbol;
+				}
+				else if (x == door.position.x && y == door.position.y) {
+					toDraw = door.symbol;
 				}
 				else {
 					for (int i = 0; i < heals_count; i++) {
@@ -335,6 +350,33 @@ void playerMove(Entity& player) {
 	::Sleep(50);
 
 }
+
+void nextLevel(Entity& player) {
+	srand(time(NULL));
+	player.position = { 0,3 };
+
+	spawnGuard();
+	spawnGoblin();
+	spawnGigant();
+	spawnHeal();
+	spawnDamageBoost();
+	spawnCoin();
+
+	level_count++;
+	std::cout << endl << "Next Level!";
+	Sleep(130);
+	std::cout << ' ';
+}
+
+void doorFunc(Entity& player, Entity& door) {
+		
+	if (player.position.x == door.position.x && player.position.y == door.position.y) {
+		nextLevel(player);
+			
+		}
+	}
+
+
 void takeItem(Entity& player) {
 	for (int i = 0; i < heals_count; i++) {
 		if (player.position.x == heals[i].position.x && player.position.y == heals[i].position.y) {
@@ -436,18 +478,13 @@ void fight(Entity& player) {
 int main() {
 	srand(time(NULL));
 	Entity player = createPlayer(0, 3);
-
+	Entity door = createDoor(19, 3);
 
 	spawnGuard();
-
 	spawnGoblin();
-
 	spawnGigant();
-
 	spawnHeal();
-
 	spawnDamageBoost();
-
 	spawnCoin();
 
 
@@ -455,14 +492,11 @@ int main() {
 		system("cls");
 
 		drawStats(player);
-
-		draw(player);
-
+		draw(player, door);
 		playerMove(player);
-
 		fight(player);
-
 		takeItem(player);
+		doorFunc(player, door);
 
 
 
