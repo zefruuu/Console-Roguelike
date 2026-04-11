@@ -404,9 +404,8 @@ void takeItem(Entity& player) {
 	}
 	for (int i = 0; i < coins_count; i++) {
 		if (player.position.x == coins[i].position.x && player.position.y == coins[i].position.y) {
-			player.damage_player += coins[i].effect;
 			for (int j = i; j < coins_count - 1; j++) {
-				damage_boosts[j] = coins[j + 1];
+				coins[j] = coins[j + 1];
 			}
 
 			coin++;
