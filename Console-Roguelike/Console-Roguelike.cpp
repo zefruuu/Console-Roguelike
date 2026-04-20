@@ -1,9 +1,45 @@
 ﻿#include <iostream>
-#include <fstream>
-#include <windows.h>
-#include <conio.h>
+#include <vector>
+#include <string>
+#include <thread>
+#include <chrono>
 #include <ctime>
-#include <locale>
+
+#ifdef _WIN32
+    #include <conio.h>
+#else
+    #include <termios.h>
+    #include <unistd.h>
+    #include <fcntl.h>
+	
+	int _kbhit() {
+		struct termios oldt, newt;
+		int ch, oldf;
+		tcgetattr(STDIN_FILENO, &oldt);
+		newt = oldt;
+		newt.c_lflag &= ~(ICANON | ECHO);
+		tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+		oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
+		fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
+		ch = getchar();
+		tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+		fcntl(STDIN_FILENO, F_SETFL, oldf);
+		if (ch != EOF) { ungetc(ch, stdin); return 1; }
+		return 0;
+	}
+
+	int _getch() {
+		struct termios oldt, newt;
+		int ch;
+		tcgetattr(STDIN_FILENO, &oldt);
+		newt = oldt;
+		newt.c_lflag &= ~(ICANON | ECHO);
+		tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+		ch = getchar();
+		tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+		return ch;
+	}
+#endif
 
 using namespace std;
 
@@ -136,10 +172,6 @@ Entity createDoor(int x, int y) {
 }
 
 
-
-
-
-
 const int MAX_GOBLINS = 3;
 int goblins_count = 0;
 Entity goblins[MAX_GOBLINS];
@@ -177,6 +209,13 @@ int kills = 0;
 int coin = 0;
 int level_count = 1;
 
+void delay(int ms) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+}
+
+void clearScreen() {
+    cout << "\033[2J\033[H" << flush;
+}
 
 void spawnGoblin() {
 	goblins_count = 1 + rand() % MAX_GOBLINS;
@@ -347,7 +386,7 @@ void playerMove(Entity& player) {
 	if (player.position.y < 0) {
 		player.position.y++;
 	}
-	::Sleep(50);
+	delay(50);
 
 }
 
@@ -364,7 +403,7 @@ void nextLevel(Entity& player) {
 
 	level_count++;
 	std::cout << endl << "Next Level!";
-	Sleep(130);
+	delay(130);
 	std::cout << ' ';
 }
 
@@ -469,7 +508,7 @@ void fight(Entity& player) {
 	if (player.hp_player <= 0) {
 		isRuning = false;
 		cout << "You Dead!";
-		::Sleep(200);
+		delay(200);
 	}
 }
 
@@ -488,7 +527,7 @@ int main() {
 
 
 	while (isRuning) {
-		system("cls");
+		clearScreen();
 
 		drawStats(player);
 		draw(player, door);
@@ -496,14 +535,7 @@ int main() {
 		fight(player);
 		takeItem(player);
 		doorFunc(player, door);
-
-
-
-
-
 	}
-
-
 
 	return 0;
 }
